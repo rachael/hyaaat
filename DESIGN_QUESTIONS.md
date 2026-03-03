@@ -57,15 +57,18 @@ Options aren't mutually exclusive and could be mixed per-mechanic:
    over play. Could work if it's styled with enough personality.
 
 **Flavor direction (not a spec):**
-Whatever form feedback takes, the *voice* shouldn't feel like a readout.
-Reference points:
-- **Papyrus (Undertale dating scene):** earnest, dramatic, reactions all over
-  the map. Unpredictable but always *very invested* — the variance is what
-  makes it feel alive.
+- **Papyrus (Undertale date scene) — specifically the meters.** He shows you
+  explicit visual meters labeled things like "COOLNESS" and "MYSTERY" that are
+  all over the place in what they measure and how they behave. They're literal
+  HUD indicators but completely unserious about it — the absurdity of the
+  labeling and the variance in their behavior IS the charm. This is a different
+  design option from options 2–4 above: show explicit meters, but make the
+  meters themselves have personality. Not "FIGHTING SPIRIT: 1.6×" but something
+  that communicates the same information while being weird about it.
 - **Gurren Lagann spiral power:** fightingSpirit is structurally Spiral Power.
   The show earns going unhinged because it escalates in register — different
-  energy at different levels, not just the same thing louder. Reaction pool
-  should be wide and personality-forward, escalating rather than repeating.
+  energy at different levels, not the same thing louder. Whatever the display
+  approach, reactions/callouts should escalate rather than repeat.
 
 **To answer with research/playtesting:**
 - Do players notice fightingSpirit is a mechanic at all, without being told?
