@@ -180,3 +180,59 @@ npm test
 Tests cover: damage formula (combat.js), targeting algorithm (targeting.js),
 audio analysis utilities (audio.js). Three.js / DOM systems are not tested
 (browser environment not available in Node test runner).
+
+---
+
+## Lessons from Stage 1 — what bit us and why
+
+### The windup multiplier was missing from the formula
+
+`calculateDamage()` was initially implemented with only a higher soft cap for
+windup, without the `raw × 2` multiplier that the design doc specifies. The
+formula in CLAUDE.md is:
+
+```
+damage = clamp(raw × 2, DAMAGE_FLOOR, WINDUP_SOFT_CAP)   // windup attack
+```
+
+The initial code did `clamp(raw, DAMAGE_FLOOR, WINDUP_SOFT_CAP)` — wrong cap,
+missing multiplier. A unit test caught it. Future agents: if you touch
+`calculateDamage`, verify both the multiplier AND the cap.
+
+### Targeting score formula has a distance² dominance zone
+
+The score `facingBonus / (dist² + ε)` means that at close range, distance
+completely overpowers the facing bonus. Specifically:
+
+- facing beats proximity ONLY when: `d_front < d_back × √2`
+- Example: if close-behind is 0.5 units away, a facing target must be < 0.7
+  units away for facing to win. A target 2 units away in front LOSES to 0.5
+  units behind.
+
+This is intentional — point-blank targets should be hard to miss regardless of
+angle. But it means you cannot write tests like "facing always beats proximity"
+without checking the actual distance ratio. Always compute scores manually when
+writing targeting tests.
+
+### `_vowelRun` is private but probably shouldn't be
+
+`this._vowelRun` is computed in `_updateVowelRun()` and used only inside
+`_updateRidiculousFactor()`. If you want to expose vowel run strength in the
+HUD (e.g. a "vowel streak" indicator), rename it to `this.vowelRun` and add it
+to the `audioState` getter. No other changes needed.
+
+### The scream meter uses `window.dispatchEvent` — slightly smelly
+
+`audio.js` dispatches a `window.screamLevel` custom event for the HUD meter.
+This works but ties audio.js to the browser environment in a subtle way and
+makes the flow hard to trace. If the HUD is rewritten, consider having main.js
+read `audio.volume` directly in the game loop and update the meter there instead.
+The current approach was chosen to avoid adding a UI update call inside main.js's
+game loop for a non-gameplay element, but the event bus approach has tradeoffs.
+
+### HUD code belongs in its own module
+
+`renderHearts()`, `updateWindupBar()`, `showDamageNumber()`, `showNotification()`
+are all in main.js. They work but don't belong there. When the HUD grows (Stage 2
+weapon display, fighting spirit bar, etc.), extract these into a `hud.js` module
+that exports an `updateHud(gameState)` function. main.js should just call that.
