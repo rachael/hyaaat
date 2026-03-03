@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HYAAAAT</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; overflow: hidden; font-family: 'Segoe UI', monospace; }
+
+    #game-canvas { display: block; width: 100vw; height: 100vh; }
+
+    /* ── Screens ─────────────────────────────────────────────────────────── */
+    .screen {
+      position: fixed; inset: 0;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.82);
+      z-index: 100;
+      gap: 20px;
+      color: #fff;
+    }
+    .screen h1 {
+      font-size: clamp(3rem, 10vw, 7rem);
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 30px #ff6600, 0 0 60px #ff3300;
+      color: #ffee00;
+    }
+    .screen p { font-size: 1.2rem; color: #aaa; }
+    .screen button {
+      padding: 14px 36px;
+      font-size: 1.1rem;
+      background: #ff6600;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s;
+    }
+    .screen button:hover { background: #ff8800; }
+    .screen button:disabled { background: #555; cursor: default; }
+
+    #waiting-screen p { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+    #gameover-screen h2 {
+      font-size: 1.3rem;
+      color: #aaa;
+      letter-spacing: 0.2em;
+    }
+
+    /* ── HUD ─────────────────────────────────────────────────────────────── */
+    #hud {
+      position: fixed; inset: 0;
+      display: none; /* shown when game starts */
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* Health hearts row — top-left (local) and top-right (opponent) */
+    #local-hud, #opponent-hud {
+      position: absolute; top: 18px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    #local-hud { left: 18px; }
+    #opponent-hud { right: 18px; align-items: flex-end; }
+
+    .hud-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: #888;
+      text-transform: uppercase;
+    }
+    #local-hearts, #opponent-hearts {
+      display: flex; gap: 3px; flex-wrap: wrap; max-width: 200px;
+    }
+    .heart {
+      font-size: 1.4rem;
+      line-height: 1;
+      transition: opacity 0.2s;
+    }
+    .heart.full   { color: #ff3355; }
+    .heart.empty  { color: #333; }
+    /* Partial heart: clip with a CSS custom property */
+    .heart.partial {
+      position: relative;
+      color: #333; /* empty base */
+    }
+    .heart.partial::before {
+      content: '♥';
+      position: absolute; left: 0; top: 0;
+      color: #ff3355;
+      clip-path: inset(0 calc(100% - var(--fill)) 0 0);
+    }
+
+    /* Windup charge bar — bottom center */
+    #windup-container {
+      position: absolute;
+      bottom: 60px; left: 50%; transform: translateX(-50%);
+      width: 220px;
+    }
+    #windup-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: #ffdd00;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    #windup-track {
+      width: 100%; height: 10px;
+      background: #222;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #windup-bar {
+      display: none;
+      height: 100%;
+      background: #ffdd00;
+      border-radius: 5px;
+      transition: background 0.1s;
+    }
+
+    /* Volume meter (scream indicator) — bottom left */
+    #scream-meter {
+      position: absolute;
+      bottom: 18px; left: 18px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    #scream-label {
+      font-size: 0.6rem; letter-spacing: 0.15em; color: #666;
+    }
+    #scream-track {
+      width: 10px; height: 80px;
+      background: #222; border-radius: 5px; overflow: hidden;
+      display: flex; align-items: flex-end;
+    }
+    #scream-fill {
+      width: 100%; background: #44ff88; border-radius: 5px;
+      transition: height 0.05s;
+    }
+
+    /* Damage number popup — center */
+    #damage-display {
+      position: absolute;
+      top: 38%; left: 50%; transform: translateX(-50%);
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #ffee00;
+      text-shadow: 0 0 12px #ff6600;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      letter-spacing: 0.05em;
+    }
+    #damage-display.windup {
+      font-size: 3.5rem;
+      color: #ff4400;
+      text-shadow: 0 0 20px #ffaa00;
+    }
+
+    /* Notification — center top */
+    #notification {
+      position: absolute;
+      top: 80px; left: 50%; transform: translateX(-50%);
+      font-size: 1.6rem;
+      font-weight: bold;
+      letter-spacing: 0.15em;
+      color: #fff;
+      text-shadow: 0 0 16px #ff8800;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    /* Screen flash overlay */
+    #screen-flash {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 200;
+    }
+
+    /* Controls hint */
+    #controls-hint {
+      position: absolute;
+      bottom: 18px; right: 18px;
+      font-size: 0.65rem;
+      color: #444;
+      line-height: 1.7;
+      text-align: right;
+    }
+
+    /* Pointer lock prompt */
+    #pointer-lock-prompt {
+      position: fixed;
+      bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #888;
+      font-size: 0.75rem;
+      padding: 8px 16px;
+      border-radius: 20px;
+      z-index: 60;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="game-canvas"></canvas>
+
+<!-- ── Screens ──────────────────────────────────────────────────────────────── -->
+
+<div id="title-screen" class="screen" style="display:flex;">
+  <h1>HYAAAAT</h1>
+  <p>Scream to deal damage. Yell "HUP" to roll faster.</p>
+  <button id="allow-mic-btn">🎤 Allow Microphone</button>
+  <p style="font-size:0.8rem; color:#555; margin-top:8px;">
+    Mic required for full experience — works without it but you'll deal minimum damage.
+  </p>
+</div>
+
+<div id="waiting-screen" class="screen">
+  <h1>HYAAAAT</h1>
+  <p>Waiting for opponent…</p>
+</div>
+
+<div id="gameover-screen" class="screen">
+  <h2>HYAAAAT</h2>
+  <h1 id="gameover-title">VICTORY</h1>
+  <button id="play-again-btn">Play Again</button>
+</div>
+
+<!-- ── HUD ───────────────────────────────────────────────────────────────────── -->
+
+<div id="hud">
+  <!-- Local player health -->
+  <div id="local-hud">
+    <div class="hud-label">YOU</div>
+    <div id="local-hearts"></div>
+  </div>
+
+  <!-- Opponent health -->
+  <div id="opponent-hud">
+    <div class="hud-label">OPPONENT</div>
+    <div id="opponent-hearts"></div>
+  </div>
+
+  <!-- Windup charge -->
+  <div id="windup-container">
+    <div id="windup-label">WIND UP</div>
+    <div id="windup-track">
+      <div id="windup-bar"></div>
+    </div>
+  </div>
+
+  <!-- Scream meter -->
+  <div id="scream-meter">
+    <div id="scream-track">
+      <div id="scream-fill" style="height:0%;"></div>
+    </div>
+    <div id="scream-label">SCREAM</div>
+  </div>
+
+  <!-- Damage number -->
+  <div id="damage-display"></div>
+
+  <!-- Notifications (FIGHT!, HUP×2, etc.) -->
+  <div id="notification"></div>
+
+  <!-- Controls hint -->
+  <div id="controls-hint">
+    WASD move &nbsp;·&nbsp; Mouse aim<br>
+    Left click attack &nbsp;·&nbsp; Hold right click wind up<br>
+    Space + scream HUP to roll faster
+  </div>
+</div>
+
+<!-- Screen flash (damage received) -->
+<div id="screen-flash"></div>
+
+<!-- Pointer lock hint -->
+<div id="pointer-lock-prompt">Click to capture mouse</div>
+
+<!-- ── Scripts ────────────────────────────────────────────────────────────────── -->
+
+<!-- Socket.io client (served by the Node server) -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Three.js via importmap -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module" src="/js/main.js"></script>
+
+<script>
+  // Pointer lock prompt visibility
+  document.addEventListener('pointerlockchange', () => {
+    const prompt = document.getElementById('pointer-lock-prompt');
+    if (prompt) prompt.style.opacity = document.pointerLockElement ? '0' : '1';
+  });
+
+  // Live scream meter update (runs outside module system for simplicity)
+  // Listens on a custom event fired from audio.js via window
+  window.addEventListener('screamLevel', (e) => {
+    const fill = document.getElementById('scream-fill');
+    if (fill) fill.style.height = `${Math.round(e.detail * 100)}%`;
+  });
+</script>
+
+</body>
+</html>
