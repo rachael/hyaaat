@@ -291,3 +291,46 @@ cases where all players are in the same room. A bystander watching the screen
 should be able to tell what's happening and find it funny within ~10 seconds
 of observation.
 
+---
+
+## Visual aesthetic
+
+### Primary reference: N64-era Zelda (OOT / Majora's Mask)
+Low-poly, chunky geometry, bold readable silhouettes, flat or vertex-colored
+surfaces. This is the target aesthetic for characters, environment, and
+animations.
+
+**This is the right call practically, not just aesthetically.** Low-poly is
+less art asset work, not more — fewer polygons, simpler/no textures, faster to
+iterate. GC/TP-era (e.g. Twilight Princess) requires more detailed meshes,
+higher-res textures, and more complex shading, which means more work regardless
+of whether code is AI-generated. The per-polygon art work can't be delegated.
+
+Three.js supports this directly:
+- `MeshToonMaterial` with a simple gradient map gets most of the N64 look for
+  free (quantized shading, no specular highlights)
+- Low polygon counts (~500–2000 per character) render fast across the full
+  range of hardware the target demographic has
+- `createPlayerMesh()` in `graphics/player-mesh.js` is already structured to
+  swap in real geometry — add OOT-style low-poly meshes there when ready
+
+### Damage effects reference: No More Heroes (Wii, 2007 — Suda51)
+Travis Touchdown, beam katana, saves by sitting on a toilet. The kill/hit
+effects are what's relevant here: big stylized rank text, color bursts, bold
+graphic-design-forward impact feedback. Very achievable in Three.js/DOM:
+- Large, bold, possibly rotated damage numbers with color coding (small hit =
+  white, big hit = orange/red, crit = yellow flash)
+- Short particle burst on impact (already partially implemented in `effects.js`)
+- Possible screen-flash or brief vignette on heavy hits
+- The number style should feel like a graphic design choice, not a UI element
+
+The No More Heroes reference is specifically for **hit/kill feedback** — not
+the overall aesthetic, which stays N64 Zelda. These are compatible; OOT-style
+visuals with NMH-style hit text would look intentional and good together.
+
+### What this means for `effects.js`
+`showDamageNumber()` in `main.js` (currently just a DOM element with a number)
+should eventually become a proper styled effect — bold, large, briefly animated,
+personality in the typography. This is a Stage 2 polish item but the reference
+is locked in now.
+
