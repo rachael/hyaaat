@@ -36,41 +36,45 @@ A player who screams consistently for 10 seconds will deal significantly more
 damage than one who screams only at the moment of hitting. This is a deep
 mechanic but completely invisible.
 
-**Working direction (from HCI review):**
-Show just enough to make the system learnable and feel great — not enough to
-expose the math. The game should stay casual and fast-paced; explicit
-multiplier numbers would slow that down and invite min-maxing over fun.
+**Genuinely open — answer comes from research and playtesting, not assumptions.**
+Options aren't mutually exclusive and could be mixed per-mechanic:
 
-Proposed approach: ambient/embodied feedback rather than readouts.
-- fightingSpirit → the player *mesh* pulses or glows brighter as it builds.
-  No number, no bar. Players learn "screaming more makes me glow and hit harder"
-  without needing to know the 1–2× range.
-- ridiculousFactor → a brief flash of flavor text on notable events
-  ("BATTLE CRY!", "VOWEL RUN!") as a surprise reward, not a tracked meter.
-  Same energy as a fighting game announcer callout.
+1. **Nothing shown** — current state. Deep but invisible. Players who figure it
+   out feel clever; players who don't just see damage vary mysteriously.
 
-**Creative direction note (flavor, not finalized):**
-The callout vocabulary shouldn't feel like a HUD readout. It should feel like
-a *character* reacting — varied, escalating, sometimes unhinged. Two reference
-points:
-- **Papyrus (Undertale dating scene):** reactions that are earnest, dramatic,
-  and all over the map. You never know exactly what he'll say but it always
-  feels *very invested*. That unpredictability is part of the charm.
-- **Gurren Lagann spiral power:** fightingSpirit is mechanically Spiral Power —
-  it builds from sustained commitment and the show goes completely off the rails
-  with it in a way that feels *earned*. The feedback could escalate in register
-  as the value climbs (different callouts at 1.2× vs 1.8× vs 2.0× max).
+2. **Ambient/embodied** — no numbers, just visual response. Mesh pulses or
+   glows as fightingSpirit climbs; flavor text callouts ("BATTLE CRY!") fire
+   for ridiculousFactor events. Learnable without reading a stat.
 
-Not committing to specific strings yet — just noting that the reaction pool
-should be wide, personality-forward, and should escalate rather than repeat.
-This is a "vibe to capture in implementation" note, not a spec.
+3. **Rough indicator** — a stylized meter/icon showing approximate level without
+   a precise number. A rage flame, a heat gauge, a spiral fill. Scale choice
+   (linear vs log vs exponential) matters independently of what's displayed —
+   an exponential visual can make early buildup feel rewarding even when the
+   actual damage delta is still small.
 
-This needs playtesting to validate. Open sub-questions:
-- Does the mesh glow read clearly enough at the camera distance and with
-  the existing lighting setup? Or does it get lost?
-- Is "BATTLE CRY!" text too distracting mid-fight? Does it add to the fun
-  or interrupt focus?
-- Is the 3-second fightingSpirit build time tunable by feel after playtesting?
+4. **Explicit value** — show the actual multiplier, or a rounded version.
+   Transparent and learnable, but risks clinical feel or inviting optimization
+   over play. Could work if it's styled with enough personality.
+
+**Flavor direction (not a spec):**
+Whatever form feedback takes, the *voice* shouldn't feel like a readout.
+Reference points:
+- **Papyrus (Undertale dating scene):** earnest, dramatic, reactions all over
+  the map. Unpredictable but always *very invested* — the variance is what
+  makes it feel alive.
+- **Gurren Lagann spiral power:** fightingSpirit is structurally Spiral Power.
+  The show earns going unhinged because it escalates in register — different
+  energy at different levels, not just the same thing louder. Reaction pool
+  should be wide and personality-forward, escalating rather than repeating.
+
+**To answer with research/playtesting:**
+- Do players notice fightingSpirit is a mechanic at all, without being told?
+- Does seeing a rough indicator change play behavior? Does that feel fun or
+  mechanical?
+- Which display scale (linear vs log vs exponential) makes buildup feel most
+  satisfying to watch, independent of actual damage delta?
+- Is flavor text distracting mid-fight, or does it add to the chaos?
+- 3-second fightingSpirit ramp — responsive enough, or too slow?
 
 ---
 
