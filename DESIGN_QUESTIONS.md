@@ -36,16 +36,25 @@ A player who screams consistently for 10 seconds will deal significantly more
 damage than one who screams only at the moment of hitting. This is a deep
 mechanic but completely invisible.
 
-**Questions:**
-- Should fightingSpirit have its own HUD indicator, or does showing it
-  over-complicate the UI for a party game?
-- If it should be shown, what metaphor communicates "sustained screaming over
-  time" better than a bar? (An aura? A heat level? A "rage" meter?)
-- Is the 3-second build time correct? Fast enough to feel responsive but long
-  enough that it's a meaningful sustained commitment? Or should it be tunable
-  by feel?
-- Should ridiculousFactor give an explicit audio/visual reward when it ticks
-  up (e.g. a flash of "+VOWEL RUN" text) so players can learn the behavior?
+**Working direction (from HCI review):**
+Show just enough to make the system learnable and feel great — not enough to
+expose the math. The game should stay casual and fast-paced; explicit
+multiplier numbers would slow that down and invite min-maxing over fun.
+
+Proposed approach: ambient/embodied feedback rather than readouts.
+- fightingSpirit → the player *mesh* pulses or glows brighter as it builds.
+  No number, no bar. Players learn "screaming more makes me glow and hit harder"
+  without needing to know the 1–2× range.
+- ridiculousFactor → a brief flash of flavor text on notable events
+  ("BATTLE CRY!", "VOWEL RUN!") as a surprise reward, not a tracked meter.
+  Same energy as a fighting game announcer callout.
+
+This needs playtesting to validate. Open sub-questions:
+- Does the mesh glow read clearly enough at the camera distance and with
+  the existing lighting setup? Or does it get lost?
+- Is "BATTLE CRY!" text too distracting mid-fight? Does it add to the fun
+  or interrupt focus?
+- Is the 3-second fightingSpirit build time tunable by feel after playtesting?
 
 ---
 
