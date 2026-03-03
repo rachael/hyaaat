@@ -49,6 +49,22 @@ Proposed approach: ambient/embodied feedback rather than readouts.
   ("BATTLE CRY!", "VOWEL RUN!") as a surprise reward, not a tracked meter.
   Same energy as a fighting game announcer callout.
 
+**Creative direction note (flavor, not finalized):**
+The callout vocabulary shouldn't feel like a HUD readout. It should feel like
+a *character* reacting — varied, escalating, sometimes unhinged. Two reference
+points:
+- **Papyrus (Undertale dating scene):** reactions that are earnest, dramatic,
+  and all over the map. You never know exactly what he'll say but it always
+  feels *very invested*. That unpredictability is part of the charm.
+- **Gurren Lagann spiral power:** fightingSpirit is mechanically Spiral Power —
+  it builds from sustained commitment and the show goes completely off the rails
+  with it in a way that feels *earned*. The feedback could escalate in register
+  as the value climbs (different callouts at 1.2× vs 1.8× vs 2.0× max).
+
+Not committing to specific strings yet — just noting that the reaction pool
+should be wide, personality-forward, and should escalate rather than repeat.
+This is a "vibe to capture in implementation" note, not a spec.
+
 This needs playtesting to validate. Open sub-questions:
 - Does the mesh glow read clearly enough at the camera distance and with
   the existing lighting setup? Or does it get lost?
