@@ -93,6 +93,25 @@ let playerIndex = 0;
 // Systems (initialised in init())
 let audio, input, network;
 
+// ── Practice mode bot ────────────────────────────────────────────────────────
+// Client-side only — no server connection needed in practice mode.
+// Simple 4-state AI: patrol → chase → attack → retreat.
+
+const BOT = {
+  enabled: false,
+  state: 'patrol', // 'patrol' | 'chase' | 'attack' | 'retreat'
+  stateTimer: 0,          // ms remaining in timed state
+  attackCooldown: 0,      // ms until bot can attack again
+  patrolAngle: 0,         // current angle on patrol orbit
+  PATROL_RADIUS: 4.5,
+  PATROL_SPEED: 1.8,
+  CHASE_SPEED: 3.8,
+  RETREAT_SPEED: 4.5,
+  CHASE_RANGE: 8,
+  ATTACK_INTERVAL_MS: 2800,
+  RETREAT_DURATION_MS: 700,
+};
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -221,8 +240,12 @@ function gameLoop(timestamp) {
     updateCamera(dt);
     updateMovement(dt);
     updateCombat(dt);
-    updateOpponent(dt);
-    syncNetwork();
+    if (BOT.enabled) {
+      updateBot(dt);
+    } else {
+      updateOpponent(dt);
+      syncNetwork();
+    }
   }
 
   renderer.render(scene, camera);
@@ -392,6 +415,7 @@ function updateCombat(dt) {
     }
   }
 
+
   // ── Light attack (left mouse click) ───────────────────────────────────────
   if (
     input.justPressed(ACTIONS.LIGHT_ATTACK) &&
@@ -410,7 +434,7 @@ function doLightAttack() {
   local.attackCooldownLeft = COMBAT.LIGHT_ATTACK_COOLDOWN_MS;
   const damage = calculateDamage(audio.audioState, false);
 
-  network.sendAttackLanded({ damage, audioState: audio.audioState });
+  if (!BOT.enabled) network.sendAttackLanded({ damage, audioState: audio.audioState });
   spawnHitEffect(scene, opponent.position.clone(), damage);
   showDamageNumber(damage, false);
 
@@ -437,7 +461,7 @@ function releaseWindup() {
   local.windupCooldownLeft = COMBAT.WINDUP_COOLDOWN_MS;
   const damage = calculateDamage(audio.audioState, true);
 
-  network.sendAttackLanded({ damage, audioState: audio.audioState, isWindup: true });
+  if (!BOT.enabled) network.sendAttackLanded({ damage, audioState: audio.audioState, isWindup: true });
   spawnHitEffect(scene, opponent.position.clone(), damage);
   spawnWindupRelease(scene, local.position.clone());
   showDamageNumber(damage, true);
@@ -487,6 +511,105 @@ function syncNetwork() {
     yaw: local.yaw,
     hp: local.hp,
   });
+}
+
+// ── Practice mode ─────────────────────────────────────────────────────────────
+
+export function startPracticeMode() {
+  BOT.enabled = true;
+  opponent.connected = true;
+  opponent.hp = COMBAT.MAX_HP;
+  opponent.position.set(-4, 0, -4);
+  opponentMesh.visible = true;
+  opponentMesh.setColor(0xee4422); // orange-red bot colour
+  local.hp = COMBAT.MAX_HP;
+  gamePhase = 'playing';
+  showScreen('hud');
+  updateHud();
+  showNotification('PRACTICE MODE', 2000);
+}
+
+function updateBot(dt) {
+  BOT.attackCooldown = Math.max(0, BOT.attackCooldown - dt * 1000);
+  if (BOT.stateTimer > 0) BOT.stateTimer -= dt * 1000;
+
+  const toPlayer = new THREE.Vector3(
+    local.position.x - opponent.position.x,
+    0,
+    local.position.z - opponent.position.z,
+  );
+  const distToPlayer = toPlayer.length();
+
+  // ── State transitions ──────────────────────────────────────────────────────
+  if (BOT.state === 'patrol' && distToPlayer < BOT.CHASE_RANGE) {
+    BOT.state = 'chase';
+  }
+  if (BOT.state === 'chase') {
+    if (distToPlayer > BOT.CHASE_RANGE * 1.4) BOT.state = 'patrol';
+    if (distToPlayer < COMBAT.ATTACK_RANGE && BOT.attackCooldown <= 0) {
+      BOT.state = 'attack';
+    }
+  }
+  if (BOT.state === 'retreat' && BOT.stateTimer <= 0) {
+    BOT.state = 'chase';
+  }
+
+  // ── Attack ─────────────────────────────────────────────────────────────────
+  if (BOT.state === 'attack') {
+    const botAudio = {
+      volume:           0.25 + Math.random() * 0.55,
+      fightingSpirit:   1.0  + Math.random() * 0.6,
+      ridiculousFactor: 1.0  + Math.random() * 0.3,
+    };
+    const botDamage = calculateDamage(botAudio, false);
+    local.hp = Math.max(0, local.hp - botDamage);
+    updateHud();
+    flashScreen('red');
+    spawnHitEffect(scene, local.position.clone(), botDamage);
+
+    BOT.attackCooldown = BOT.ATTACK_INTERVAL_MS;
+    BOT.stateTimer = BOT.RETREAT_DURATION_MS;
+    BOT.state = 'retreat';
+
+    if (local.hp <= 0) endGame('lose');
+  }
+
+  // ── Movement ───────────────────────────────────────────────────────────────
+  const moveDir = new THREE.Vector3();
+
+  if (BOT.state === 'patrol') {
+    BOT.patrolAngle += dt * 0.45;
+    const patrolTarget = new THREE.Vector3(
+      Math.cos(BOT.patrolAngle) * BOT.PATROL_RADIUS,
+      0,
+      Math.sin(BOT.patrolAngle) * BOT.PATROL_RADIUS,
+    );
+    moveDir.copy(patrolTarget).sub(opponent.position).normalize();
+    opponent.position.addScaledVector(moveDir, BOT.PATROL_SPEED * dt);
+  } else if (BOT.state === 'chase') {
+    moveDir.copy(toPlayer).normalize();
+    opponent.position.addScaledVector(moveDir, BOT.CHASE_SPEED * dt);
+  } else if (BOT.state === 'retreat') {
+    moveDir.copy(toPlayer).normalize().negate();
+    opponent.position.addScaledVector(moveDir, BOT.RETREAT_SPEED * dt);
+  }
+
+  // ── Arena boundary ─────────────────────────────────────────────────────────
+  const d = Math.sqrt(opponent.position.x ** 2 + opponent.position.z ** 2);
+  if (d > ARENA_RADIUS - 0.8) {
+    const n = new THREE.Vector3(opponent.position.x, 0, opponent.position.z).normalize();
+    opponent.position.x = n.x * (ARENA_RADIUS - 0.8);
+    opponent.position.z = n.z * (ARENA_RADIUS - 0.8);
+  }
+  opponent.position.y = 0;
+
+  // ── Face the player ────────────────────────────────────────────────────────
+  if (distToPlayer > 0.1) {
+    opponent.yaw = Math.atan2(toPlayer.x, toPlayer.z);
+  }
+
+  opponentMesh.position.copy(opponent.position);
+  opponentMesh.rotation.y = opponent.yaw;
 }
 
 // ── Game state transitions ────────────────────────────────────────────────────

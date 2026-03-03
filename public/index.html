@@ -224,6 +224,12 @@
 <div id="waiting-screen" class="screen">
   <h1>HYAAAAT</h1>
   <p>Waiting for opponent…</p>
+  <button id="practice-btn" style="background:#446; font-size:0.9rem; margin-top:8px;">
+    🤖 Practice Mode (solo)
+  </button>
+  <p style="font-size:0.75rem; color:#555; margin-top:4px;">
+    Fight a bot while you wait, or just to learn the controls
+  </p>
 </div>
 
 <div id="gameover-screen" class="screen">
@@ -299,6 +305,15 @@
 </script>
 
 <script type="module" src="/js/main.js"></script>
+
+<script type="module">
+  import { startPracticeMode } from '/js/main.js';
+
+  // Practice Mode button
+  document.getElementById('practice-btn')?.addEventListener('click', () => {
+    startPracticeMode();
+  });
+</script>
 
 <script>
   // Pointer lock prompt visibility
