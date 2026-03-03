@@ -99,6 +99,74 @@ means only changing these factory files — no game logic changes needed.
 
 ---
 
+## Graphics aesthetic
+
+### Primary reference: N64/OOT (Ocarina of Time, Majora's Mask)
+
+Low-poly, chunky geometry, bold readable silhouettes, flat or vertex-colored
+surfaces. This is the target for characters, environment, and all in-world
+objects. Not "unfinished" — deliberately retro and readable.
+
+This is **less work** than GC/TP-era (Twilight Princess), not more. Fewer
+polygons, simpler/no textures, faster to iterate. Targeting an aesthetic that
+runs well on every device the target demographic owns is a design constraint
+as well as a practical one.
+
+### Three.js implementation
+
+```js
+// 2-tone toon shading — quantized light like OOT's pre-baked vertex lighting.
+// See player-mesh.js for the DataTexture gradient map construction.
+const mat = new THREE.MeshToonMaterial({ color: 0x4488ff, gradientMap: GRADIENT_MAP });
+```
+
+- **MeshToonMaterial** with a 2-tone `DataTexture` gradient map (shadow + lit,
+  `NearestFilter` for the hard band edge). Already implemented in
+  `graphics/player-mesh.js` as `GRADIENT_MAP` — import and reuse it.
+- **Polygon budgets**: ~500–2000 triangles per character, ~8 segments max on
+  cylinders, 8×6 on spheres. Box geometry for limbs/torso (already faceted).
+- **No normal maps, no specular, no PBR materials.** `MeshToonMaterial` or
+  `MeshLambertMaterial` only for world objects.
+- **Shadow casting on**: `castShadow = true` on all character meshes,
+  `receiveShadow = true` on floor. Keep the existing directional light.
+
+### Hit effect reference: No More Heroes (Wii, 2007 — Suda51)
+
+Specifically the kill/hit feedback: big bold rank text, color bursts,
+graphic-design-forward impact numbers. Applicable to `showDamageNumber()` and
+`effects.js` — not the world aesthetic, which stays OOT.
+
+Target hit effect feel:
+- Large, rotated, bold damage numbers — looks like a graphic design decision,
+  not a UI element
+- Color-coded: small hit = white, medium = orange, heavy = red, crit/peak = yellow flash
+- Short burst: number floats up ~40px and fades over ~600ms
+- Screen-level vignette flash on heavy hits (>100 damage)
+
+`showDamageNumber()` is currently a bare DOM element. Polish to NMH-style is a
+**Stage 2** item but the reference is locked — any agent touching hit effects
+should use this as the target.
+
+### Do / don't
+
+| Do | Don't |
+|----|-------|
+| MeshToonMaterial / MeshLambertMaterial | MeshStandardMaterial, MeshPhysicalMaterial |
+| Low segment counts (6–8) | High-poly spheres (32+), smooth curves |
+| Flat color per region (tunic = one color, skin = one color) | Gradient textures, PBR roughness maps |
+| Bold silhouettes, readable at small screen size | Fine detail that disappears at game scale |
+| Snap-band toon shading | Smooth specular highlights |
+| DataTexture gradient map reuse from player-mesh.js | Per-object gradient textures |
+
+### Factory contract (unchanged)
+
+`createPlayerMesh(options)` and `createArena(options)` return `THREE.Object3D`
+instances. Game logic moves/rotates them. No game logic reads internals.
+Swapping geometry means only changing the factory files. See architecture
+section above.
+
+---
+
 ## Damage formula
 
 ```
@@ -110,7 +178,7 @@ BASE_DAMAGE       = 10
 DAMAGE_FLOOR      = 8    (weak screams still register)
 DAMAGE_SOFT_CAP   = 150  (per normal hit)
 WINDUP_SOFT_CAP   = 300  (per windup release)
-MAX_HP            = 800  (10 hearts × 80hp)
+MAX_HP            = 600  (10 hearts × 60hp)
 ```
 
 `volume` is RMS of microphone input, 0–1.

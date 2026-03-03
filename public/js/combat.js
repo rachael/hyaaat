@@ -9,9 +9,9 @@
 export const COMBAT = Object.freeze({
   BASE_DAMAGE: 10,
 
-  MAX_HP: 800,
+  MAX_HP: 600,
   HEARTS: 10,
-  HP_PER_HEART: 80, // MAX_HP / HEARTS
+  HP_PER_HEART: 60, // MAX_HP / HEARTS
 
   DAMAGE_FLOOR: 8,        // minimum per hit — weak screams still register
   DAMAGE_SOFT_CAP: 150,   // maximum per normal hit
