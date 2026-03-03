@@ -234,3 +234,60 @@ From the defender's perspective, the damage arrives 1–2 network round trips la
 
 *These questions are in rough priority order — 1–4 most fundamental,
 5–10 more refinement-level. Flagged for HCI review before Stage 2.*
+
+---
+
+## Design pillars & target audience
+
+### Core feel
+Effortless and funny. The game should feel like something you can explain in
+one sentence, pick up in 30 seconds, and immediately have a good time with.
+Shouting is physically tiring — sessions should be short enough that nobody
+gets hoarse or bored before a round ends. Social context matters: players are
+already hanging out, and the game is something they're doing *while* hanging
+out, not something they're fully absorbed in at the expense of talking to
+each other.
+
+### Primary persona
+**Young men and boys in casual gaming sessions** — the "hey do you want to play
+[game]" demographic. They have 15–30 minutes, they're already with friends,
+they want something immediately fun that rewards shouting stupid things at each
+other. The game they're comparing this to is whatever wizard-shouting or
+voice-activated multiplayer game they saw on a stream or a friend showed them.
+Zero tolerance for setup friction; zero tolerance for long matches.
+
+### Match length is a design constraint, not a tuning afterthought
+If rounds are meant to be 2–3 minutes of active play, that has direct
+implications for the combat numbers. Current numbers at a glance:
+- MAX_HP = 800
+- Typical mid-fight damage: ~20–50 per normal hit, ~80–150 per windup
+- Floor case (weak scream): 8 damage = 100 hits to kill
+
+**This needs calibration once playtesting starts.** A 3-minute target with
+two active players both landing hits regularly probably needs average kill
+time in the 60–90 second range. Adjust MAX_HP or BASE_DAMAGE based on actual
+recorded match lengths, not estimates.
+
+### Price and accessibility
+Under $5, ideally low enough that cost is not a consideration. No barrier to
+entry is the goal. The audience is not people browsing storefronts for something
+to buy — it's people who saw it somewhere, thought it looked funny, and want
+to try it right now without friction.
+
+### It's funny
+The humor is not a side effect of the design — it's a first-class design goal.
+Mechanics (ridiculousFactor, vowel runs, HUP chain, the Papyrus-style meters)
+should be designed to produce funny moments. A match that isn't generating
+laughs from spectators and players is a failed match, regardless of whether
+the combat math balanced correctly.
+
+### Other personas worth considering
+**Streamers and content creators.** Someone screaming at their screen and
+hitting people harder for it is extremely watchable. This demographic is not
+the primary target but could be a significant acquisition channel — a single
+clip of someone going full-send on a vowel run could bring in a lot of
+primary-persona players. This means: design for spectator legibility even in
+cases where all players are in the same room. A bystander watching the screen
+should be able to tell what's happening and find it funny within ~10 seconds
+of observation.
+
